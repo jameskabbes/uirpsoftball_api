@@ -1,3 +1,3 @@
 export APP_ENV="dev" 
-python -m uirpsoftball.cli runserver
+python -m src.uirpsoftball.cli runserver
 

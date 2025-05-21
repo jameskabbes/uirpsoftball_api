@@ -1,1 +1,1 @@
-python -m uirpsoftball.cli "$@"
+python -m src.uirpsoftball.cli "$@"

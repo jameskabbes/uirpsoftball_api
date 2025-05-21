@@ -6,4 +6,4 @@ UVICORN:
   host: 0.0.0.0
   port: 8080
   reload: true
-OPENAPI_SCHEMA_PATH: ../../openapi_schema.json
+OPENAPI_SCHEMA_PATH: ../openapi_schema.json
