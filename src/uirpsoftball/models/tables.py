@@ -1,4 +1,5 @@
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, Relationship, Column
+from uirpsoftball.models.custom_field_types import timestamp
 from uirpsoftball import custom_types
 
 
@@ -21,10 +22,6 @@ class Location(SQLModel, table=True):
     link: custom_types.Location.link = Field()
     short_name: custom_types.Location.short_name = Field()
     time_zone: custom_types.Location.time_zone = Field()
-    n_games_per_round: custom_types.Location.n_games_per_round | None = Field(
-        nullable=True, default=None)
-    start_datetime: custom_types.Location.start_datetime | None = Field(
-        nullable=True, default=None)
 
     games: list["Game"] = Relationship(back_populates="location")
 
@@ -65,12 +62,13 @@ class Game(SQLModel, table=True):
         primary_key=True, index=True, unique=True, const=True)
     round_id: custom_types.Game.round_id = Field()
     home_team_id: custom_types.Game.home_team_id | None = Field(
-        foreign_key=str(Team.__tablename__) + '.id', ondelete="SET NULL", nullable=True)
+        foreign_key=str(Team.__tablename__) + '.id', ondelete="SET NULL", nullable=True, default=None)
     away_team_id: custom_types.Game.away_team_id | None = Field(
-        foreign_key=str(Team.__tablename__) + '.id', ondelete="SET NULL", nullable=True)
+        foreign_key=str(Team.__tablename__) + '.id', ondelete="SET NULL", nullable=True, default=None)
     officiating_team_id: custom_types.Game.officiating_team_id | None = Field(
-        foreign_key=str(Team.__tablename__) + '.id',  ondelete="SET NULL", nullable=True)
-    datetime: custom_types.Game.datetime = Field()
+        foreign_key=str(Team.__tablename__) + '.id',  ondelete="SET NULL", nullable=True, default=None)
+    datetime: custom_types.Game.datetime = Field(
+        sa_column=Column(timestamp.Timestamp))
     location_id: custom_types.Game.location_id | None = Field(
         foreign_key=str(Location.__tablename__) + '.id',  ondelete="SET NULL", nullable=True)
     is_accepting_scores: custom_types.Game.is_accepting_scores = Field(
@@ -118,6 +116,8 @@ class Tournament(SQLModel, table=True):
 
 
 class TournamentGame(SQLModel, table=True):
+    __tablename__ = "tournament_game"  # type: ignore[assignment]
+
     game_id: custom_types.TournamentGame.game_id = Field(
         primary_key=True, index=True, unique=True, const=True, foreign_key=str(Game.__tablename__) + '.id', ondelete="CASCADE")
     tournament_id: custom_types.TournamentGame.tournament_id | None = Field(
@@ -139,5 +139,6 @@ class Visit(SQLModel, table=True):
 
     id: custom_types.Visit.id = Field(
         primary_key=True, index=True, unique=True, const=True)
-    datetime: custom_types.Visit.datetime = Field()
+    datetime: custom_types.Visit.datetime = Field(
+        sa_column=Column(timestamp.Timestamp))
     path: custom_types.Visit.path = Field()

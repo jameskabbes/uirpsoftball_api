@@ -1,6 +1,7 @@
 from pydantic import StringConstraints, conint, confloat
-from typing import Annotated, TypeVar
+from typing import Annotated, TypeVar, TypedDict
 import datetime as datetime_module
+from collections.abc import Sequence
 
 DivisionId = int
 GameId = int
@@ -10,6 +11,8 @@ LocationId = int
 SeedingParameterId = int
 TournamentId = int
 VisitId = int
+
+timestamp = float
 
 
 class Division:
@@ -24,8 +27,6 @@ class Location:
     short_name = Annotated[str, StringConstraints(
         min_length=1, max_length=256)]
     time_zone = Annotated[str, StringConstraints(min_length=1, max_length=256)]
-    n_games_per_round = int
-    start_datetime = datetime_module.datetime
 
 
 _hex_color = Annotated[str, StringConstraints(
@@ -104,3 +105,8 @@ TSimpleId_contra = TypeVar(
 TId = TypeVar('TId', bound=Id)
 TId_co = TypeVar('TId_co', bound=Id, covariant=True)
 TId_contra = TypeVar('TId_contra', bound=Id, contravariant=True)
+
+
+class GameIdsAndRounds(TypedDict):
+    round: RoundId
+    game_ids: Sequence[GameId]

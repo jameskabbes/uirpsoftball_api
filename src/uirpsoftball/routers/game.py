@@ -72,7 +72,7 @@ class GameRouter(_Base):
 
     def _set_routes(self):
         self.router.get('/')(self.list)
-        self.router.get('/{game_id}')(self.by_id)
-        self.router.patch('/{game_id}/score')(self.update_score)
-        self.router.post('/assign-matchups')(self.assign_matchups)
-        self.router.post('/reprocess-all-scores')(self.reprocess_all_scores)
+        self.router.get('/{game_id}/')(self.by_id)
+        self.router.patch('/{game_id}/score/')(self.update_score)
+        self.router.post('/assign-matchups/')(self.assign_matchups)
+        self.router.post('/reprocess-all-scores/')(self.reprocess_all_scores)

@@ -123,6 +123,13 @@ class HasService(
         base_service.TOrderBy_co,
     ]]
 
+class NotFoundException(HTTPException):
+
+    def __init__(self, model: Type[models.Model], id: custom_types.Id):
+        self.status_code = status.HTTP_404_NOT_FOUND
+        self.detail = base_service.NotFoundError.not_found_message(model, id)
+        super().__init__(status_code=self.status_code, detail=self.detail)
+
 
 class ServiceRouter(Generic[
     models.TModel,
@@ -151,9 +158,9 @@ class ServiceRouter(Generic[
                     'id': params['id'],
                 })
             except base_service.NotFoundError as e:
-                print('raising HTTP Exception')
-                raise HTTPException(
-                    status.HTTP_404_NOT_FOUND, detail=e.error_message)
+                raise NotFoundException(
+                    model=cls._SERVICE._MODEL, id=params['id']
+                )
             except Exception as e:
                 print(f"Exception type: {type(e)}")
                 print(e)
@@ -176,9 +183,6 @@ class ServiceRouter(Generic[
                     d['query'] = params['query']
 
                 model_insts = await cls._SERVICE.read_many(d)
-            except base_service.NotFoundError as e:
-                raise HTTPException(
-                    status.HTTP_404_NOT_FOUND, detail=e.error_message)
             except Exception as e:
                 raise
 
@@ -210,7 +214,9 @@ class ServiceRouter(Generic[
                     'update_model': params['update_model'],
                 })
             except base_service.NotFoundError as e:
-                raise
+                raise NotFoundException(
+                    model=cls._SERVICE._MODEL, id=params['id']
+                )
             except Exception as e:
                 raise
 
@@ -225,7 +231,9 @@ class ServiceRouter(Generic[
                     'id': params['id'],
                 })
             except base_service.NotFoundError as e:
-                raise
+                raise NotFoundException(
+                    model=cls._SERVICE._MODEL, id=params['id']
+                )
             except Exception as e:
                 raise
 

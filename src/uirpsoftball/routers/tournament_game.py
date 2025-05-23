@@ -48,4 +48,4 @@ class TournamentGameRouter(_Base):
 
     def _set_routes(self):
         self.router.get('/')(self.list)
-        self.router.get('/{tournament_game_id}')(self.by_id)
+        self.router.get('/{tournament_game_id}/')(self.by_id)

@@ -48,4 +48,4 @@ class TeamRouter(_Base):
 
     def _set_routes(self):
         self.router.get('/')(self.list)
-        self.router.get('/{team_id}')(self.by_id)
+        self.router.get('/{team_id}/')(self.by_id)

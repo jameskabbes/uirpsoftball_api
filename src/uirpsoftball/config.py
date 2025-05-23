@@ -138,7 +138,9 @@ class BackendConfig(TypedDict):
     DB: DbEnv
     UVICORN: dict
     OPENAPI_SCHEMA_PATH: str
-
+    REGULAR_SEASON_ROUNDS: int
+    PLAYOFF_ROUNDS: int
+    GAME_TIMEDELTA: str
 
 with BACKEND_CONFIG_PATH.open('r') as f:
     _BACKEND_CONFIG: BackendConfig = yaml.safe_load(f)
@@ -153,3 +155,8 @@ UVICORN = _BACKEND_CONFIG['UVICORN']
 
 OPENAPI_SCHEMA_PATH = convert_env_path_to_absolute(
     Path.cwd(), _BACKEND_CONFIG['OPENAPI_SCHEMA_PATH'])
+
+REGULAR_SEASON_ROUNDS = _BACKEND_CONFIG['REGULAR_SEASON_ROUNDS']
+PLAYOFF_ROUNDS = _BACKEND_CONFIG['PLAYOFF_ROUNDS']
+GAME_TIMEDELTA: datetime_module.timedelta = isodate.parse_duration(
+    _BACKEND_CONFIG['GAME_TIMEDELTA'])

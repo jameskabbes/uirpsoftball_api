@@ -5,6 +5,7 @@ from sqlmodel import SQLModel
 import uvicorn
 from uirpsoftball import models, config
 from uirpsoftball.app import app as fastapi_app
+from uirpsoftball.services import game as game_service
 
 cli = typer.Typer()
 
@@ -31,6 +32,16 @@ def export_openapi():
 
     print('Exporting OpenAPI schema...')
     config.OPENAPI_SCHEMA_PATH.write_text(json.dumps(fastapi_app.openapi()))
+
+
+@cli.command()
+def test():
+
+    async def _main():
+        async with config.ASYNC_SESSIONMAKER() as session:
+            print()
+
+    asyncio.run(_main())
 
 
 if __name__ == "__main__":

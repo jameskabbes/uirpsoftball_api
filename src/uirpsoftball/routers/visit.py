@@ -48,4 +48,4 @@ class VisitRouter(_Base):
 
     def _set_routes(self):
         self.router.get('/')(self.list)
-        self.router.get('/{visit_id}')(self.by_id)
+        self.router.get('/{visit_id}/')(self.by_id)

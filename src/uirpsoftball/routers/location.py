@@ -48,4 +48,4 @@ class LocationRouter(_Base):
 
     def _set_routes(self):
         self.router.get('/')(self.list)
-        self.router.get('/{location_id}')(self.by_id)
+        self.router.get('/{location_id}/')(self.by_id)

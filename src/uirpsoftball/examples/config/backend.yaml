@@ -7,3 +7,5 @@ UVICORN:
   port: 8080
   reload: true
 OPENAPI_SCHEMA_PATH: ../openapi_schema.json
+REGULAR_SEASON_ROUNDS: 6
+PLAYOFF_ROUNDS: 2
