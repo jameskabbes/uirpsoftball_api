@@ -20,6 +20,8 @@ class ScoreUpdate(BaseModel):
     home_team_score: custom_types.Game.home_team_score | None = None
     away_team_score: custom_types.Game.away_team_score | None = None
 
+class IsAcceptingScoresUpdate(BaseModel):
+    is_accepting_scores: custom_types.Game.is_accepting_scores | None = None
 
 class GameUpdate(BaseModel):
     round_id: custom_types.Game.round_id | None = None

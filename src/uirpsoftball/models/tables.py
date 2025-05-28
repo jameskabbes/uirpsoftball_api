@@ -4,7 +4,7 @@ from uirpsoftball import custom_types
 
 
 class Division(SQLModel, table=True):
-    __tablename__ = "division"  # type: ignore[assignment]
+    __tablename__ = "divisions"  # type: ignore[assignment]
 
     id: custom_types.Division.id = Field(
         primary_key=True, index=True, unique=True, const=True)
@@ -14,7 +14,7 @@ class Division(SQLModel, table=True):
 
 
 class Location(SQLModel, table=True):
-    __tablename__ = "location"  # type: ignore[assignment]
+    __tablename__ = "locations"  # type: ignore[assignment]
 
     id: custom_types.Location.id = Field(
         primary_key=True, index=True, unique=True, const=True)
@@ -27,7 +27,7 @@ class Location(SQLModel, table=True):
 
 
 class Team(SQLModel, table=True):
-    __tablename__ = "team"  # type: ignore[assignment]
+    __tablename__ = "teams"  # type: ignore[assignment]
 
     id: custom_types.Team.id = Field(
         primary_key=True, index=True, unique=True, const=True)
@@ -57,7 +57,7 @@ class Team(SQLModel, table=True):
 
 
 class Game(SQLModel, table=True):
-    __tablename__ = "game"  # type: ignore[assignment]
+    __tablename__ = "games"  # type: ignore[assignment]
     id: custom_types.Game.id = Field(
         primary_key=True, index=True, unique=True, const=True)
     round_id: custom_types.Game.round_id = Field()
@@ -96,7 +96,7 @@ class Game(SQLModel, table=True):
 
 
 class SeedingParameter(SQLModel, table=True):
-    __tablename__ = "seeding_parameter"  # type: ignore[assignment]
+    __tablename__ = "seeding_parameters"  # type: ignore[assignment]
 
     id: custom_types.SeedingParameter.id = Field(
         primary_key=True, index=True, unique=True, const=True)
@@ -105,7 +105,7 @@ class SeedingParameter(SQLModel, table=True):
 
 
 class Tournament(SQLModel, table=True):
-    __tablename__ = "tournament"  # type: ignore[assignment]
+    __tablename__ = "tournaments"  # type: ignore[assignment]
 
     id: custom_types.Tournament.id = Field(
         primary_key=True, index=True, unique=True, const=True)
@@ -116,12 +116,12 @@ class Tournament(SQLModel, table=True):
 
 
 class TournamentGame(SQLModel, table=True):
-    __tablename__ = "tournament_game"  # type: ignore[assignment]
+    __tablename__ = "tournament_games"  # type: ignore[assignment]
 
     game_id: custom_types.TournamentGame.game_id = Field(
         primary_key=True, index=True, unique=True, const=True, foreign_key=str(Game.__tablename__) + '.id', ondelete="CASCADE")
-    tournament_id: custom_types.TournamentGame.tournament_id | None = Field(
-        foreign_key=str(Tournament.__tablename__) + '.id', ondelete="CASCADE", nullable=True)
+    tournament_id: custom_types.TournamentGame.tournament_id = Field(
+        foreign_key=str(Tournament.__tablename__) + '.id', ondelete="RESTRICT")
     bracket_id: custom_types.TournamentGame.bracket_id = Field()
     round: custom_types.TournamentGame.round = Field()
     home_team_filler: custom_types.TournamentGame.home_team_filler | None = Field(
@@ -135,7 +135,7 @@ class TournamentGame(SQLModel, table=True):
 
 
 class Visit(SQLModel, table=True):
-    __tablename__ = "visit"  # type: ignore[assignment]
+    __tablename__ = "visits"  # type: ignore[assignment]
 
     id: custom_types.Visit.id = Field(
         primary_key=True, index=True, unique=True, const=True)

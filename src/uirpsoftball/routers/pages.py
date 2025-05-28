@@ -9,7 +9,7 @@ from uirpsoftball import config, custom_types, models
 
 from uirpsoftball.models import tables
 from uirpsoftball.routers import base, team as team_router, game as game_router
-from uirpsoftball.services import team as team_service, game as game_service, location as location_service, division as division_service, tournament as tournament_service
+from uirpsoftball.services import team as team_service, game as game_service, location as location_service, division as division_service, tournament as tournament_service, tournament_game as tournament_game_service
 from uirpsoftball.schemas import game as game_schema, team as team_schema, location as location_schema, tournament as tournament_schema, tournament_game as tournament_game_schema, division as division_schema, pagination as pagination_schema, seeding_parameter as seeding_parameter_schema, visit as visit_schema
 
 
@@ -53,9 +53,9 @@ class HomeResponse(ScheduleAggregator):
 
 
 class ScheduleResponse(ScheduleAggregator):
-    # game_ids_and_rounds:
+    game_ids_and_rounds: list[custom_types.GameIdsAndRounds]
     tournaments: list[tournament_schema.TournamentExport]
-    # tournament_games: list[]
+    tournament_games: tournament_game_service.TournamentGameDetails
 
 
 class TeamResponse(ScheduleAggregator):
@@ -83,6 +83,7 @@ class PagesRouter(
         async with config.ASYNC_SESSIONMAKER() as session:
 
             relevant_rounds = await game_service.Game.fetch_relevant_rounds(session)
+            print (relevant_rounds)
             games = await game_service.Game.fetch_many(
                 session,
                 pagination=pagination_schema.Pagination(limit=1000, offset=0),
@@ -103,22 +104,7 @@ class PagesRouter(
                 session,
                 pagination=pagination_schema.Pagination(limit=1000, offset=0),
             )
-            game_ids_and_rounds: list[custom_types.GameIdsAndRounds] = []
-            game_ids_by_round: dict[custom_types.Game.round_id,
-                                    list[custom_types.Game.id]] = {}
 
-            for game in games:
-                if game.round_id not in game_ids_by_round:
-                    game_ids_by_round[game.round_id] = []
-                game_ids_by_round[game.round_id].append(game.id)
-
-            for round_id, game_ids in game_ids_by_round.items():
-                game_ids_and_rounds.append(
-                    {
-                        'round': round_id,
-                        'game_ids': game_ids
-                    }
-                )
 
             return HomeResponse(
                 games={game.id: game_schema.GameExport.model_validate(
@@ -130,7 +116,7 @@ class PagesRouter(
                 divisions={division.id: division_schema.DivisionExport.model_validate(
                     division) for division in divisions},
                 division_ids_ordered=[division.id for division in divisions],
-                game_ids_and_rounds=game_ids_and_rounds
+                game_ids_and_rounds=game_service.Game.games_into_game_ids_and_rounds(games),
             )
 
     @classmethod
@@ -195,10 +181,6 @@ class PagesRouter(
                 session,
                 pagination=pagination_schema.Pagination(limit=1000, offset=0),
             )
-            divisions = await division_service.Division.fetch_many(
-                session,
-                pagination=pagination_schema.Pagination(limit=1000, offset=0),
-            )
             tournaments = await tournament_service.Tournament.fetch_many(
                 session,
                 pagination=pagination_schema.Pagination(limit=1000, offset=0),
@@ -213,6 +195,8 @@ class PagesRouter(
                     location) for location in locations},
                 tournaments=[tournament_schema.TournamentExport.model_validate(
                     tournament) for tournament in tournaments],
+                game_ids_and_rounds=game_service.Game.games_into_game_ids_and_rounds(games),
+                tournament_games=await tournament_game_service.TournamentGame.get_tournament_game_details(),
             )
 
     @classmethod

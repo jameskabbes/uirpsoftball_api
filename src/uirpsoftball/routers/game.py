@@ -63,6 +63,21 @@ class GameRouter(_Base):
         )
 
     @classmethod
+    async def update_is_accepting_scores(
+        cls,
+        game_id: custom_types.Game.id,
+        game: game_schema.IsAcceptingScoresUpdate,
+    ) -> game_schema.GameExport:
+        return game_schema.GameExport.model_validate(
+            await cls._patch({
+                'id': game_id,
+                'update_model': game_schema.GameAdminUpdate(
+                    is_accepting_scores=game.is_accepting_scores,
+                )
+            })
+        )
+
+    @classmethod
     async def assign_matchups(cls) -> None:
         pass
 
@@ -76,3 +91,4 @@ class GameRouter(_Base):
         self.router.patch('/{game_id}/score/')(self.update_score)
         self.router.post('/assign-matchups/')(self.assign_matchups)
         self.router.post('/reprocess-all-scores/')(self.reprocess_all_scores)
+        self.router.patch('/{game_id}/is-accepting-scores/')(self.update_is_accepting_scores)

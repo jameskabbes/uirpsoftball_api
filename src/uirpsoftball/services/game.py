@@ -37,6 +37,28 @@ class Game(
             )
         )
 
+    @classmethod
+    def games_into_game_ids_and_rounds( cls, games: Sequence[GameTable] ) -> list[custom_types.GameIdsAndRounds]:
+
+        game_ids_and_rounds: list[custom_types.GameIdsAndRounds] = []
+        game_ids_by_round: dict[custom_types.Game.round_id,
+                                    list[custom_types.Game.id]] = {}
+
+        for game in games:
+            if game.round_id not in game_ids_by_round:
+                game_ids_by_round[game.round_id] = []
+            game_ids_by_round[game.round_id].append(game.id)
+
+        for round_id, game_ids in game_ids_by_round.items():
+            game_ids_and_rounds.append(
+                {
+                    'round': round_id,
+                    'game_ids': game_ids
+                }
+            )
+        return game_ids_and_rounds
+
+
     # @classmethod
     # async def fetch_team_unknown_rounds(cls, session: AsyncSession, team_id: custom_types.Team.id) -> Sequence[GameTable]:
 
