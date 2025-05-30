@@ -102,6 +102,7 @@ class SeedingParameter(SQLModel, table=True):
         primary_key=True, index=True, unique=True, const=True)
     parameter: custom_types.SeedingParameter.parameter = Field()
     name: custom_types.SeedingParameter.name = Field()
+    rank: custom_types.SeedingParameter.rank = Field(unique=True, const=True)
 
 
 class Tournament(SQLModel, table=True):

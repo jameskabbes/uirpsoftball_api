@@ -9,6 +9,13 @@ class TeamExport(FromAttributes):
     division_id: custom_types.Team.division_id | None
     slug: custom_types.Team.slug
     color: custom_types.Team.color | None
+    seed: custom_types.Team.seed
+
+
+class TeamStatisticsExport(FromAttributes):
+    run_differential: custom_types.Team.run_differential
+    game_ids_won: set[custom_types.Game.id]
+    game_ids_lost: set[custom_types.Game.id]
 
 
 class TeamUpdate(BaseModel):

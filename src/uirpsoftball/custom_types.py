@@ -33,7 +33,6 @@ _hex_color = Annotated[str, StringConstraints(
     min_length=1, max_length=6)]  # Hex color code without the leading '#'
 
 _seed = conint(ge=1)
-_percentage = confloat(ge=0, le=1)
 
 
 class Team:
@@ -44,7 +43,7 @@ class Team:
         min_length=1, max_length=256)]
     color = _hex_color
     seed = _seed
-    win_percentage = _percentage
+    run_differential = int
     game_ids_won = list[GameId]
     game_ids_lost = list[GameId]
 
@@ -65,12 +64,16 @@ class Game:
     away_team_score = _score
 
 
+_rank = conint(ge=1)
+
+
 class SeedingParameter:
     id = SeedingParameterId
     parameter = Annotated[str, StringConstraints(
         min_length=1, max_length=256)]
     name = Annotated[str, StringConstraints(
         min_length=1, max_length=256)]
+    rank = _rank
 
 
 class Tournament:
