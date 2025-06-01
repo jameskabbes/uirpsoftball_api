@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from uirpsoftball import custom_types
 from uirpsoftball.schemas import FromAttributes
 
@@ -17,11 +17,20 @@ class GameExport(FromAttributes):
 
 
 class ScoreUpdate(BaseModel):
-    home_team_score: custom_types.Game.home_team_score | None = None
-    away_team_score: custom_types.Game.away_team_score | None = None
+    home_team_score: custom_types.Game.home_team_score | None
+    away_team_score: custom_types.Game.away_team_score | None
+
+    @model_validator(mode="after")
+    def check_scores_both_null_or_not_null(self):
+        if (self.home_team_score is None) != (self.away_team_score is None):
+            raise ValueError(
+                "Both home_team_score and away_team_score must be either null or not null.")
+        return self
+
 
 class IsAcceptingScoresUpdate(BaseModel):
     is_accepting_scores: custom_types.Game.is_accepting_scores | None = None
+
 
 class GameUpdate(BaseModel):
     round_id: custom_types.Game.round_id | None = None

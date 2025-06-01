@@ -166,10 +166,13 @@ class PagesRouter(
 
             teams = await team_service.Team.fetch_many(session, pagination=pagination_schema.Pagination(limit=1000, offset=0))
 
+            teams_export = {team.id: team_schema.TeamExport.model_validate(
+                team) for team in teams}
+
             division = await division_service.Division.fetch_one(
                 session,
                 select(division_service.Division._MODEL).where(
-                    division_service.Division._MODEL.id == team_id)
+                    division_service.Division._MODEL.id == teams_export[team_id].division_id)
             )
 
             featured_game_id = None
@@ -188,8 +191,7 @@ class PagesRouter(
                 games={game.id: game_schema.GameExport.model_validate(
                     game) for game in games_known},
                 locations={location.id: location_schema.LocationExport.model_validate(location) for location in await location_service.Location.fetch_many(session, pagination=pagination_schema.Pagination(limit=1000, offset=0))},
-                teams={team.id: team_schema.TeamExport.model_validate(
-                    team) for team in teams},
+                teams=teams_export,
                 games_known_ids=[game.id for game in games_known],
                 division=division_schema.DivisionExport.model_validate(
                     division),
