@@ -6,7 +6,7 @@ After=network.target
 User=pi
 WorkingDirectory=/home/pi/Repos/uirpsoftball/uirpsoftball_api
 Environment="PATH=/home/pi/Repos/uirpsoftball/uirpsoftball_api/.venv/bin"
-ExecStart=./fastapi_prod.sh
+ExecStart=/home/pi/Repos/uirpsoftball/uirpsoftball_api/fastapi_prod.sh
 
 [Install]
 WantedBy=multi-user.target
