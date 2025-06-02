@@ -1,0 +1,12 @@
+[Unit]
+Description=gunicorn instance to serve softball_backend
+After=network.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/Repos/uirpsoftball/uirpsoftball_api
+Environment="PATH=/home/pi/Repos/uirpsoftball/uirpsoftball_api/.venv/bin"
+ExecStart=./fastapi_prod.sh
+
+[Install]
+WantedBy=multi-user.target
