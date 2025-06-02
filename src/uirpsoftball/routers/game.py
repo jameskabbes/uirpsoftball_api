@@ -7,6 +7,7 @@ from uirpsoftball import config, custom_types
 from uirpsoftball.routers import base
 from uirpsoftball.models.tables import Game as GameTable
 from uirpsoftball.services.game import Game as GameService
+from uirpsoftball.services.team import Team as TeamService
 from uirpsoftball.schemas import game as game_schema, pagination as pagination_schema, order_by as order_by_schema
 
 
@@ -51,16 +52,26 @@ class GameRouter(_Base):
         cls,
         game_id: custom_types.Game.id,
         game: game_schema.ScoreUpdate,
-    ) -> game_schema.GameExport:
-        return game_schema.GameExport.model_validate(
-            await cls._patch({
-                'id': game_id,
-                'update_model': game_schema.GameAdminUpdate(
-                    home_team_score=game.home_team_score,
-                    away_team_score=game.away_team_score,
-                )
-            })
-        )
+    ):
+        game_return = await cls._patch({
+            'id': game_id,
+            'update_model': game_schema.GameAdminUpdate(
+                home_team_score=game.home_team_score,
+                away_team_score=game.away_team_score,
+            )
+        })
+        async with config.ASYNC_SESSIONMAKER() as session:
+            divisions: set[custom_types.Division.id] = set()
+            for team_id in [game_return.home_team_id, game_return.away_team_id]:
+                if team_id is not None:
+                    team = await TeamService.fetch_by_id(session, team_id)
+                    if team is not None:
+                        division = team.division_id
+                        if division is not None:
+                            divisions.add(division)
+
+            for division_id in divisions:
+                await TeamService.update_seeds(session, division_id)
 
     @classmethod
     async def update_is_accepting_scores(
@@ -77,18 +88,9 @@ class GameRouter(_Base):
             })
         )
 
-    @classmethod
-    async def assign_matchups(cls) -> None:
-        pass
-
-    @classmethod
-    async def reprocess_all_scores(cls) -> None:
-        pass
-
     def _set_routes(self):
         self.router.get('/')(self.list)
         self.router.get('/{game_id}/')(self.by_id)
         self.router.patch('/{game_id}/score/')(self.update_score)
-        self.router.post('/assign-matchups/')(self.assign_matchups)
-        self.router.post('/reprocess-all-scores/')(self.reprocess_all_scores)
-        self.router.patch('/{game_id}/is-accepting-scores/')(self.update_is_accepting_scores)
+        self.router.patch(
+            '/{game_id}/is-accepting-scores/')(self.update_is_accepting_scores)

@@ -1,8 +1,8 @@
 from sqlmodel import select, col
 from sqlmodel.ext.asyncio.session import AsyncSession
 from uirpsoftball import custom_types, config
-from uirpsoftball.services import base, game as game_service
-from uirpsoftball.models.tables import Team as TeamTable
+from uirpsoftball.services import base, game as game_service, seeding_parameter as seeding_parameter_service
+from uirpsoftball.models.tables import Team as TeamTable, SeedingParameter as SeedingParameterTable
 from uirpsoftball.schemas import team as team_schema, pagination as pagination_schema
 
 from collections.abc import Sequence
@@ -51,8 +51,7 @@ class Team(
         teams = await cls.fetch_many_by_division(session, division_id, pagination)
         ranked_teams = sorted(
             teams,
-            key=lambda team: team.seed,
-            reverse=True
+            key=lambda team: team.seed
         )
 
         return [ranked_team.id for ranked_team in ranked_teams]
@@ -105,3 +104,54 @@ class Team(
                             game.id)
 
         return statistics_by_team_id
+
+    @classmethod
+    async def update_seeds(cls, session: AsyncSession, division_id: custom_types.Division.id):
+        teams = await cls.fetch_many_by_division(session, division_id, pagination_schema.Pagination(limit=1000, offset=0))
+        team_statistics_by_team_id = await cls.calculate_statistics(session, [team.id for team in teams])
+        seeding_parameters = await seeding_parameter_service.SeedingParameter.fetch_many(
+            session,
+            pagination=pagination_schema.Pagination(limit=1000, offset=0),
+            query=select(seeding_parameter_service.SeedingParameter._MODEL).order_by(
+                col(SeedingParameterTable.rank).asc()
+            )
+        )
+
+        teams_by_id: dict[custom_types.Team.id, TeamTable] = {
+            team.id: team for team in teams}
+
+        # Reset all seeds to 1 before re-ranking
+        for team in teams:
+            team.seed = 1
+
+        for seeding_parameter in seeding_parameters:
+
+            team_ids_by_seeds: dict[custom_types.Team.seed,
+                                    set[custom_types.Team.id]] = {}
+
+            # Group teams by their seed
+            for team in teams:
+                seed = team.seed
+                if seed not in team_ids_by_seeds:
+                    team_ids_by_seeds[seed] = set()
+                team_ids_by_seeds[seed].add(team.id)
+
+            sorted_seeds = sorted(team_ids_by_seeds)
+
+            for sorted_seed in sorted_seeds:
+                if len(team_ids_by_seeds[sorted_seed]) > 1:
+                    # only rank teams that need differentiation
+
+                    seeding_parameter_service.SeedingParameter.rank_by_seeding_parameter(
+                        session=session,
+                        seeding_parameter=seeding_parameter,
+                        teams_by_id={
+                            team_id: teams_by_id[team_id] for team_id in team_ids_by_seeds[sorted_seed]
+                        },
+                        team_statistics_by_team_id={
+                            team_id: team_statistics_by_team_id[team_id] for team_id in team_ids_by_seeds[sorted_seed]
+                        }
+                    )
+
+        session.add_all(teams)
+        await session.commit()
