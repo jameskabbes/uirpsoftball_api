@@ -1,4 +1,5 @@
 .DS_Store
 data/
+data_staging/
 __pycache__/
 .venv/
