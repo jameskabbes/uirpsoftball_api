@@ -84,6 +84,13 @@ class StandingsResponse(BaseModel):
     seeding_parameters: Sequence[seeding_parameter_schema.SeedingParameterExport]
 
 
+class AdminResponse(BaseModel):
+    games: GameExportsById
+    teams: TeamExportsById
+    locations: LocationExportsById
+    game_ids_and_rounds: list[custom_types.GameIdsAndRounds]
+
+
 class PagesRouter(
     base.Router
 ):
@@ -353,9 +360,37 @@ class PagesRouter(
                 ]
             )
 
+    @classmethod
+    async def admin(cls) -> AdminResponse:
+        async with config.ASYNC_SESSIONMAKER() as session:
+
+            games = await game_service.Game.fetch_many(
+                session,
+                pagination=pagination_schema.Pagination(limit=1000, offset=0))
+            teams = await team_service.Team.fetch_many(
+                session,
+                pagination=pagination_schema.Pagination(limit=1000, offset=0),
+            )
+            locations = await location_service.Location.fetch_many(
+                session,
+                pagination=pagination_schema.Pagination(limit=1000, offset=0),
+            )
+
+            return AdminResponse(
+                games={game.id: game_schema.GameExport.model_validate(
+                    game) for game in games},
+                teams={team.id: team_schema.TeamExport.model_validate(
+                    team) for team in teams},
+                locations={location.id: location_schema.LocationExport.model_validate(
+                    location) for location in locations},
+                game_ids_and_rounds=game_service.Game.games_into_game_ids_and_rounds(
+                    games),
+            )
+
     def _set_routes(self):
         self.router.get('/')(self.home)
         self.router.get('/team/{team_slug}/')(self.team)
         self.router.get('/schedule/')(self.schedule)
         self.router.get('/game/{game_id}/')(self.game)
         self.router.get('/standings/')(self.standings)
+        self.router.get('/admin/')(self.admin)
