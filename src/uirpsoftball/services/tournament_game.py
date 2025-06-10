@@ -6,7 +6,7 @@ from uirpsoftball.services import base
 from uirpsoftball.schemas import tournament_game as tournament_game_schema, pagination as pagination_schema
 
 TournamentGameDetails = dict[custom_types.Tournament.id,
-                             dict[int, dict[custom_types.Game.round_id, list[tournament_game_schema.TournamentGameExport]]]]
+                             dict[custom_types.TournamentGame.bracket_id, dict[custom_types.TournamentGame.round, list[tournament_game_schema.TournamentGameExport]]]]
 
 
 class TournamentGame(
