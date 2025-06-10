@@ -70,7 +70,7 @@ class Game(SQLModel, table=True):
     datetime: custom_types.Game.datetime = Field(
         sa_column=Column(timestamp.Timestamp))
     location_id: custom_types.Game.location_id | None = Field(
-        foreign_key=str(Location.__tablename__) + '.id',  ondelete="SET NULL", nullable=True)
+        foreign_key=str(Location.__tablename__) + '.id',  ondelete="SET NULL", nullable=True, default=None)
     is_accepting_scores: custom_types.Game.is_accepting_scores = Field(
         default=False)
     home_team_score: custom_types.Game.home_team_score | None = Field(
