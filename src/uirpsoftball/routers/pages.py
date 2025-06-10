@@ -65,8 +65,8 @@ class TeamResponse(BaseModel):
     games: GameExportsById
     teams: TeamExportsById
     locations: LocationExportsById
-    games_known_ids: list[custom_types.Game.id]
-    games_unknown_ids: list[custom_types.Game.id]
+    game_known_ids: list[custom_types.Game.id]
+    game_unknown_ids: list[custom_types.Game.id]
     team_id: custom_types.Team.id
     division: division_schema.DivisionExport
     featured_game_id: custom_types.Game.id | None
@@ -168,8 +168,7 @@ class PagesRouter(
                 )
 
             games_known: list[tables.Game] = list(await game_service.Game.fetch_many_by_team(session, team_id))
-            games_unknown: list[tables.Game] = []
-            # games_unknown: list[tables.Game] = list(await game_service.Game.fetch_team_unknown_rounds(session, team_id))
+            games_unknown: list[tables.Game] = list(await game_service.Game.fetch_team_unknown_games(session, team_id))
 
             teams = await team_service.Team.fetch_many(session, pagination=pagination_schema.Pagination(limit=1000, offset=0))
 
@@ -196,13 +195,13 @@ class PagesRouter(
 
             return TeamResponse(
                 games={game.id: game_schema.GameExport.model_validate(
-                    game) for game in games_known},
+                    game) for game in games_known+games_unknown},
                 locations={location.id: location_schema.LocationExport.model_validate(location) for location in await location_service.Location.fetch_many(session, pagination=pagination_schema.Pagination(limit=1000, offset=0))},
                 teams=teams_export,
-                games_known_ids=[game.id for game in games_known],
+                game_known_ids=[game.id for game in games_known],
                 division=division_schema.DivisionExport.model_validate(
                     division),
-                games_unknown_ids=[game.id for game in games_unknown],
+                game_unknown_ids=[game.id for game in games_unknown],
                 team_id=team_id,
                 featured_game_id=featured_game_id,
                 team_statistics=await team_service.Team.calculate_statistics(

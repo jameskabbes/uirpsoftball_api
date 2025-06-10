@@ -38,11 +38,11 @@ class Game(
         )
 
     @classmethod
-    def games_into_game_ids_and_rounds( cls, games: Sequence[GameTable] ) -> list[custom_types.GameIdsAndRounds]:
+    def games_into_game_ids_and_rounds(cls, games: Sequence[GameTable]) -> list[custom_types.GameIdsAndRounds]:
 
         game_ids_and_rounds: list[custom_types.GameIdsAndRounds] = []
         game_ids_by_round: dict[custom_types.Game.round_id,
-                                    list[custom_types.Game.id]] = {}
+                                list[custom_types.Game.id]] = {}
 
         for game in games:
             if game.round_id not in game_ids_by_round:
@@ -58,67 +58,52 @@ class Game(
             )
         return game_ids_and_rounds
 
+    @classmethod
+    async def fetch_team_unknown_games(cls, session: AsyncSession, team_id: custom_types.Team.id) -> Sequence[GameTable]:
 
-    # @classmethod
-    # async def fetch_team_unknown_rounds(cls, session: AsyncSession, team_id: custom_types.Team.id) -> Sequence[GameTable]:
+        # find rounds where team is currently not scheduled
+        # for each of the unscheduled rounds, if round contains a TBD team, send it back
 
-    #     # find rounds where team is currently not scheduled
-    #     # for each of the unscheduled rounds, if round contains a TBD team, send it back
+        # Find all round_ids where the given team_id is not scheduled as home or away
 
-    #     # Find all round_ids where the given team_id is not scheduled as home or away
-    #     rounds_with_team = select(cls._MODEL.round_id).where(
-    #         (cls._MODEL.home_team_id == team_id) | (
-    #             cls._MODEL.away_team_id == team_id)
-    #     ).distinct()
+        # find all rounds
 
-    #     rounds_without_team = select(cls._MODEL.round_id).where(
-    #         ~col(cls._MODEL.round_id).in_(rounds_with_team)
-    #     ).distinct()
+        all_rounds = set(await cls.fetch_all_rounds(session))
 
-    #     query = select(cls._MODEL).where(
-    #         (col(cls._MODEL.home_team_id) != team_id) | (
-    #             col(cls._MODEL.away_team_id) != team_id)
-    #     )
+        rounds_with_team = set(await session.exec(select(col(cls._MODEL.round_id)).where(
+            (cls._MODEL.home_team_id == team_id) | (
+                cls._MODEL.away_team_id == team_id)
+        ).distinct()))
 
-    #     print(query)
+        rounds_without_team = list(all_rounds - rounds_with_team)
+        rounds_without_team.sort()
 
-    #     not_scheduled_rounds = await cls.fetch_many(
-    #         session,
-    #         pagination=pagination_schema.Pagination(limit=1000, offset=0),
-    #         query=query
-    #     )
+        games = []
 
-    #     print(not_scheduled_rounds)
+        new_id = -1
+        for round_id in rounds_without_team:
 
-    #     subq = (
-    #         select(
-    #             cls._MODEL.round_id,
-    #             func.min(cls._MODEL.datetime).label("min_datetime")
-    #         )
-    #         .where(
-    #             col(cls._MODEL.round_id).in_(not_scheduled_rounds),
-    #             (cls._MODEL.home_team_id == -1) | (cls._MODEL.away_team_id == -1)
-    #         )
-    #         .group_by(col(cls._MODEL.round_id))
-    #         .subquery()
-    #     )
+            game_datetime = (await session.exec(select(
+                cls._MODEL.datetime
+            ).where(
+                cls._MODEL.round_id == round_id,
+                (cls._MODEL.home_team_id == None) | (
+                    cls._MODEL.away_team_id == None)
+            ).order_by(
+                col(cls._MODEL.datetime).asc()
+            ).limit(1))).one_or_none()
 
-    #     query = (
-    #         select(cls._MODEL)
-    #         .join(
-    #             subq,
-    #             (col(cls._MODEL.round_id) == subq.c.round_id) and
-    #             (col(cls._MODEL.datetime) == subq.c.min_datetime)
-    #         )
-    #     )
+            if game_datetime is not None:
+                games.append(
+                    GameTable(
+                        id=new_id,
+                        round_id=round_id,
+                        datetime=game_datetime
+                    )
+                )
+                new_id -= 1
 
-    #     tbd_games = await cls.fetch_many(
-    #         session=session,
-    #         pagination=pagination_schema.Pagination(limit=1000, offset=0),
-    #         query=query
-    #     )
-
-    #     return tbd_games
+        return games
 
     @classmethod
     async def fetch_many_by_round(cls, session: AsyncSession, round_id: custom_types.RoundId) -> Sequence[GameTable]:
