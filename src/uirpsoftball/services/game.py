@@ -138,22 +138,34 @@ class Game(
         return game_ids_and_rounds
 
     @classmethod
-    async def fetch_relevant_rounds(cls, session: AsyncSession) -> list[custom_types.RoundId]:
+    async def fetch_relevant_rounds(cls, session: AsyncSession) -> set[custom_types.RoundId]:
         """returns two relevant rounds (for the homepage), last round's games and the upcoming games"""
 
         datetime_now = datetime_module.datetime.now(
             tz=datetime_module.timezone.utc)
 
-        prior_round_id = (await session.exec(select(col(cls._MODEL.round_id)).where(cls._MODEL.datetime < datetime_now).order_by(col(cls._MODEL.datetime).desc()).limit(1))).first()
-        next_round_id = (await session.exec(select(col(cls._MODEL.round_id)).where(cls._MODEL.datetime > datetime_now).order_by(col(cls._MODEL.datetime).asc()).limit(1))).first()
+        most_recent_past_game = (await session.exec(select(cls._MODEL).where(cls._MODEL.datetime < datetime_now).order_by(col(cls._MODEL.datetime).desc()).limit(1))).first()
+        past_round_id = None
+        if most_recent_past_game is not None:
+            if most_recent_past_game.datetime > (datetime_now - datetime_module.timedelta(days=1)):
+                past_round_id = most_recent_past_game.round_id
 
-        rounds: list[custom_types.RoundId] = []
-        if prior_round_id is not None:
-            rounds.append(prior_round_id)
-        if next_round_id is not None and next_round_id != prior_round_id:
-            rounds.append(next_round_id)
+        # Base query for future rounds
+        future_rounds_base = select(col(cls._MODEL.round_id)).order_by(
+            col(cls._MODEL.datetime).asc()).limit(1)
 
-        return rounds
+        next_round_id = (await session.exec(future_rounds_base.where(cls._MODEL.datetime > datetime_now))).first()
+        next_next_round_id = (await session.exec(future_rounds_base.where(cls._MODEL.datetime > (datetime_now + datetime_module.timedelta(days=7))))).first()
+
+        round_ids: set[custom_types.RoundId] = set()
+        if past_round_id is not None:
+            round_ids.add(past_round_id)
+        if next_round_id is not None:
+            round_ids.add(next_round_id)
+        if len(round_ids) < 2 and next_next_round_id is not None:
+            round_ids.add(next_next_round_id)
+
+        return round_ids
 
     # def assign_teams_to_games(self, session: AsyncSession, n_rounds: int = config.REGULAR_SEASON_ROUNDS):
     #     """randomly assign games for each division"""
