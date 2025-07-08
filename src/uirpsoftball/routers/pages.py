@@ -48,6 +48,8 @@ class HomeResponse(BaseModel):
     team_statistics: TeamStatisticsExportsByTeamId
     team_ids_ranked_by_division: dict[custom_types.Division.id,
                                       Sequence[custom_types.Team.id]]
+    tournaments: list[tournament_schema.TournamentExport]
+    tournament_games: tournament_game_service.TournamentGameDetails
 
 
 class ScheduleResponse(BaseModel):
@@ -104,15 +106,28 @@ class PagesRouter(
         async with config.ASYNC_SESSIONMAKER() as session:
 
             relevant_rounds = await game_service.Game.fetch_relevant_rounds(session)
-            print(relevant_rounds)
-            games = await game_service.Game.fetch_many(
+            games = list(await game_service.Game.fetch_many(
                 session,
                 pagination=pagination_schema.Pagination(limit=1000, offset=0),
                 query=select(game_service.Game._MODEL).where(
                     col(game_service.Game._MODEL.round_id).in_(relevant_rounds)
                 ).order_by(col(game_service.Game._MODEL.datetime).asc(),
                            col(game_service.Game._MODEL.location_id).asc()
-                           ))
+                           )))
+
+            games_played_in_tournament = list(await game_service.Game.fetch_many(
+                session,
+                pagination=pagination_schema.Pagination(limit=1000, offset=0),
+                query=select(game_service.Game._MODEL).where(
+                    col(game_service.Game._MODEL.id).in_(
+                        [tournament_game.game_id for tournament_game in await tournament_game_service.TournamentGame.fetch_many(
+                            session,
+                            pagination=pagination_schema.Pagination(
+                                limit=1000, offset=0),
+                        )]
+                    )
+                )))
+
             teams = await team_service.Team.fetch_many(
                 session,
                 pagination=pagination_schema.Pagination(limit=1000, offset=0),
@@ -128,7 +143,7 @@ class PagesRouter(
 
             return HomeResponse(
                 games={game.id: game_schema.GameExport.model_validate(
-                    game) for game in games},
+                    game) for game in games + games_played_in_tournament},
                 teams={team.id: team_schema.TeamExport.model_validate(
                     team) for team in teams},
                 locations={location.id: location_schema.LocationExport.model_validate(
@@ -149,7 +164,15 @@ class PagesRouter(
                         pagination=pagination_schema.Pagination(
                             limit=1000, offset=0)
                     ) for division in divisions
-                }
+                },
+                tournaments=[tournament_schema.TournamentExport.model_validate(
+                    tournament) for tournament in await tournament_service.Tournament.fetch_many(
+                    session,
+                    pagination=pagination_schema.Pagination(
+                        limit=1000, offset=0),
+                )],
+                tournament_games=await tournament_game_service.TournamentGame.get_tournament_game_details(),
+
 
 
             )
