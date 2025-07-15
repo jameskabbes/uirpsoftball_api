@@ -129,6 +129,8 @@ class TournamentGame(SQLModel, table=True):
         nullable=True, default=None)
     away_team_filler: custom_types.TournamentGame.away_team_filler | None = Field(
         nullable=True, default=None)
+    officiating_team_filler: custom_types.TournamentGame.officiating_team_filler | None = Field(
+        nullable=True, default=None)
 
     game: Game = Relationship(back_populates="tournament_game")
     tournament: Tournament = Relationship(

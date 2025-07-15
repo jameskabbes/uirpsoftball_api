@@ -91,6 +91,7 @@ class TournamentGame:
     round = int
     home_team_filler = str
     away_team_filler = str
+    officiating_team_filler = str
 
 
 class Visit:
