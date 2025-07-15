@@ -10,6 +10,7 @@ class TournamentGameExport(FromAttributes):
     round: custom_types.TournamentGame.round
     home_team_filler: custom_types.TournamentGame.home_team_filler | None = None
     away_team_filler: custom_types.TournamentGame.away_team_filler | None = None
+    officiating_team_filler: custom_types.TournamentGame.officiating_team_filler | None = None
 
 
 class TournamentGameUpdate(BaseModel):
